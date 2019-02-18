@@ -1,9 +1,9 @@
 //
-//		          Programming Assignment #1 
+//		          Programming Assignment #1
 //
 //			        Victor Zordan
-//		
-//		
+//
+//
 //
 /***************************************************************************/
 
@@ -21,7 +21,7 @@
 #define HEIGHT 500
 
 Line line;
-
+bool erase = false;
 int x_last,y_last;
 
 /***************************************************************************/
@@ -42,10 +42,10 @@ void write_pixel(int x, int y, double intensity)
                                          /* Turn on the pixel found at x,y */
 {
 
-        glColor3f (intensity, intensity, intensity);                 
+        glColor3f (intensity, intensity, intensity);
         glBegin(GL_POINTS);
            glVertex3i( x, y, 0);
-        glEnd();	
+        glEnd();
 }
 
 //***************************************************************************/
@@ -53,25 +53,42 @@ void write_pixel(int x, int y, double intensity)
 void display ( void )   // Create The Display Function
 {
 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	      // Clear Screen 
+  if (erase){
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	      // Clear Screen
+    erase = false;
+  }
 
-	if (!line.haveAllPoints())
-  	write_pixel(x_last,y_last,1.0);//<-you can get rid of this call if you like
+  	// write_pixel(x_last,y_last,0.5);//<-you can get rid of this call if you like
   // CALL YOUR CODE HERE
   //dda();
   if (line.haveAllPoints()) {
-		int x = line.getPoint(0).x;
+		float x = line.getPoint(0).x;
 		float y = line.getPoint(0).y;
 		float slope = line.getSlope();
-		while (line.haveAllPoints() && x != line.getPoint(1).x){
-			printf("%f\n", slope);
-			write_pixel(x, (int)round(y),1.0);
-			(line.getXdiff() < 0) ? x-- : x++;
-			(line.getYdiff() < 0) ? y-=abs(slope) : y+=abs(slope);
-		}
+    if (abs(slope) < 1){
+    	while (line.haveAllPoints() && x != line.getPoint(1).x){
+        printf("before x:%f y:%f\t", x,y);
+    		write_pixel((int)x, (int)round(y),1.0);
+    		(line.getXdiff() < 0) ? x-- : x++;
+    		(line.getYdiff() < 0) ? y-=abs(slope) : y+=abs(slope);
+        printf("after x:%f y:%f\t", x,y);
+    	}
+    }
+    if (abs(slope) >= 1){
+      slope = line.getInvSlope();
+      while (line.haveAllPoints() && y != line.getPoint(1).y){
+        printf("before x:%f y:%f\t", x,y);
+  			write_pixel((int)round(x), (int)y,1.0);
+  			(line.getXdiff() < 0) ? x-=abs(slope) : x+=abs(slope);
+  			(line.getYdiff() < 0) ? y-- : y++;
+        printf("after x:%f y:%f\t", x,y);
+  		}
+    }
+    line.clearPoints();
+    printf("\n");
 	}
 
-  glutSwapBuffers();                                      // Draw Frame Buffer 
+  glutSwapBuffers();                                      // Draw Frame Buffer
 }
 
 /***************************************************************************/
@@ -84,9 +101,9 @@ void mouse(int button, int state, int x, int y)
         static int oldx = 0;
         static int oldy = 0;
 	int mag;
-	
+
 	y *= -1;  //align y with mouse
-	y += 500; //ignore 
+	y += 500; //ignore
 	mag = (oldx - x)*(oldx - x) + (oldy - y)*(oldy - y);
 	if (mag > 20) {
 		printf(" x,y is (%d,%d)\n", x,y);
@@ -98,7 +115,7 @@ void mouse(int button, int state, int x, int y)
 	y_last = y;
 	printf("%d\n",line.getNumPoints());
 }
- 
+
 /***************************************************************************/
 void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
 {
@@ -106,7 +123,7 @@ void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
 	switch ( key ) {
 		case 27:              // When Escape Is Pressed...
 			exit ( 0 );   // Exit The Program
-			break;        
+			break;
     case '1':             // stub for new screen
       printf("New screen\n");
 			break;
@@ -117,8 +134,9 @@ void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
 		case 'c':
 			break;
 		case 'e':
+      erase = true;
 			break;
-		default:       
+		default:
 			break;
 	}
 }
@@ -129,19 +147,17 @@ int main (int argc, char *argv[])
 /* This main function sets up the main loop of the program and continues the
    loop until the end of the data is reached.  Then the window can be closed
    using the escape key.						  */
-	
-	glutInit            ( &argc, argv ); 
-       	glutInitDisplayMode ( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH ); 
-	glutInitWindowSize  ( 500,500 ); 
-	glutCreateWindow    ( "Computer Graphics" ); 
-	glutDisplayFunc     ( display );  
+
+	glutInit            ( &argc, argv );
+       	glutInitDisplayMode ( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+	glutInitWindowSize  ( 500,500 );
+	glutCreateWindow    ( "Computer Graphics" );
+	glutDisplayFunc     ( display );
 	glutIdleFunc	    ( display );
 	glutMouseFunc       ( mouse );
 	glutKeyboardFunc    ( keyboard );
-        					      
+
         init_window();				             //create_window
-						       		
+
 	glutMainLoop        ( );                 // Initialize The Main Loop
 }
-
-

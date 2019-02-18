@@ -17,6 +17,12 @@ int Line::getNumPoints(){
 
 bool Line::haveAllPoints(){return numPoints == maxPoints;}
 
+void Line::clearPoints(){
+  delete[] points;
+  points = new Point[2];
+  numPoints = 0;
+}
+
 int Line::getXdiff(){
 	return points[1].x-points[0].x;
 }
@@ -27,4 +33,8 @@ int Line::getYdiff(){
 
 float Line::getSlope(){
 	return (float)getYdiff()/getXdiff();
+}
+
+float Line::getInvSlope(){
+  return (float)getXdiff()/getYdiff();
 }

@@ -15,8 +15,8 @@ PROGFILES = \
 
 targets default: $(TARGETS)
 
-$(PROGFILES:.cpp=): assn1.o 
-	$(CC) -o assn1 assn1.o ${LFLAGS}
+$(PROGFILES:.cpp=): assn1.o line.o
+	$(CC) -o assn1 assn1.o line.o ${LFLAGS}
 
 depend :
 	makedepend ${PROGFILES}

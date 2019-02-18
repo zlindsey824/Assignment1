@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "line.h"
+#include "curve.h"
 
 #include <GL/glut.h>   // The GL Utility Toolkit (Glut) Header
 
@@ -21,6 +22,9 @@
 #define HEIGHT 500
 
 Line line;
+Curve curve;
+bool linesActive = false;
+bool curvesActive =  false;
 bool erase = false;
 int x_last,y_last;
 
@@ -50,44 +54,59 @@ void write_pixel(int x, int y, double intensity)
 
 //***************************************************************************/
 
+void dda(){
+  float x = line.getPoint(0).x;
+  float y = line.getPoint(0).y;
+  float slope = line.getSlope();
+  if (fabs(slope) < 1){
+    while (line.haveAllPoints() && x != line.getPoint(1).x){
+      write_pixel((int)x, (int)round(y),1.0);
+      (line.getXdiff() < 0) ? x-- : x++;
+      (line.getYdiff() < 0) ? y-=fabs(slope) : y+=fabs(slope);
+    }
+  }
+  if (fabs(slope) >= 1){
+    slope = line.getInvSlope();
+    while (line.haveAllPoints() && y != line.getPoint(1).y){
+      write_pixel((int)round(x), (int)y,1.0);
+      (line.getXdiff() < 0) ? x-=fabs(slope) : x+=fabs(slope);
+      (line.getYdiff() < 0) ? y-- : y++;
+    }
+  }
+}
+
+//***************************************************************************/
+
 void display ( void )   // Create The Display Function
 {
 
   if (erase){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	      // Clear Screen
+    x_last = -1;
+    y_last = -1;
     erase = false;
   }
 
-  	// write_pixel(x_last,y_last,0.5);//<-you can get rid of this call if you like
+  write_pixel(x_last,y_last,1.0);//<-you can get rid of this call if you like
   // CALL YOUR CODE HERE
-  //dda();
-  if (line.haveAllPoints()) {
-		float x = line.getPoint(0).x;
-		float y = line.getPoint(0).y;
-		float slope = line.getSlope();
-    if (abs(slope) < 1){
-    	while (line.haveAllPoints() && x != line.getPoint(1).x){
-        printf("before x:%f y:%f\t", x,y);
-    		write_pixel((int)x, (int)round(y),1.0);
-    		(line.getXdiff() < 0) ? x-- : x++;
-    		(line.getYdiff() < 0) ? y-=abs(slope) : y+=abs(slope);
-        printf("after x:%f y:%f\t", x,y);
-    	}
-    }
-    if (abs(slope) >= 1){
-      slope = line.getInvSlope();
-      while (line.haveAllPoints() && y != line.getPoint(1).y){
-        printf("before x:%f y:%f\t", x,y);
-  			write_pixel((int)round(x), (int)y,1.0);
-  			(line.getXdiff() < 0) ? x-=abs(slope) : x+=abs(slope);
-  			(line.getYdiff() < 0) ? y-- : y++;
-        printf("after x:%f y:%f\t", x,y);
-  		}
-    }
+  if (linesActive && line.haveAllPoints()) {
+    dda();
     line.clearPoints();
     printf("\n");
 	}
-
+  if (curvesActive && curve.haveAllPoints()){
+    float divisions = 25;
+    for(int n = 1; n <= divisions; n++){
+      Point firstPoint = curve.getPoint((n-1)/divisions);
+      line.addPoint(firstPoint.x, firstPoint.y);
+      Point secondPoint = curve.getPoint(n/divisions);
+      line.addPoint(secondPoint.x, secondPoint.y);
+      dda();
+      line.clearPoints();
+    }
+    curve.clearPoints();
+    printf("\n");
+  }
   glutSwapBuffers();                                      // Draw Frame Buffer
 }
 
@@ -107,13 +126,15 @@ void mouse(int button, int state, int x, int y)
 	mag = (oldx - x)*(oldx - x) + (oldy - y)*(oldy - y);
 	if (mag > 20) {
 		printf(" x,y is (%d,%d)\n", x,y);
-		line.addPoint(x,y);
+    if (linesActive)
+		  line.addPoint(x,y);
+    if (curvesActive)
+      curve.addPoint(x,y);
 	}
 	oldx = x;
 	oldy = y;
 	x_last = x;
 	y_last = y;
-	printf("%d\n",line.getNumPoints());
 }
 
 /***************************************************************************/
@@ -128,13 +149,20 @@ void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
       printf("New screen\n");
 			break;
 		case 'l':
-			//line();
-			printf("drawing line\n");
+      linesActive = true;
+      curvesActive =  false;
+			printf("Drawing lines\n");
 			break;
 		case 'c':
+      linesActive = false;
+      curvesActive =  true;
+      printf("Drawing curves\n");
 			break;
 		case 'e':
       erase = true;
+      linesActive = false;
+      curvesActive =  false;
+      printf("Clearing screen\n");
 			break;
 		default:
 			break;

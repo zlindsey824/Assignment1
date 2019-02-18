@@ -21,4 +21,9 @@ $(PROGFILES:.cpp=): assn1.o line.o curve.o
 
 depend :
 	makedepend ${PROGFILES}
+
+clean:
+	rm *.o
+	rm assn1
+
 # DO NOT DELETE
